@@ -1,0 +1,25 @@
+{
+  "extends": "@portfolio/config-typescript/src/base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2015"
+    ],
+    "outDir": "./dist",
+    "types": [
+      "vitest/globals",
+      "node"
+    ],
+    "moduleResolution": "bundler",
+    "esModuleInterop": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    "scripts/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

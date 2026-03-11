@@ -1,0 +1,122 @@
+{
+  "name": "@portfolio/logger",
+  "version": "1.0.0",
+  "description": "Comprehensive, robust, scalable, and flexible logging system for Node.js and browser environments with structured logging, multiple transports, formatters, performance monitoring, and enterprise features",
+  "keywords": [
+    "logger",
+    "logging",
+    "structured-logging",
+    "typescript",
+    "node.js",
+    "browser",
+    "performance",
+    "monitoring",
+    "metrics",
+    "transports",
+    "formatters",
+    "enterprise"
+  ],
+  "homepage": "https://github.com/guyromellemagayano/portfolio/tree/main/packages/logger",
+  "bugs": {
+    "url": "https://github.com/guyromellemagayano/portfolio/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/guyromellemagayano/portfolio.git",
+    "directory": "packages/logger"
+  },
+  "license": "MIT",
+  "author": "Guy Romelle Magayano <aspiredtechie2010@gmail.com> (https://www.guyromellemagayano.com)",
+  "sideEffects": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/es/index.d.mts",
+        "default": "./dist/es/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./formatters": {
+      "import": {
+        "types": "./dist/es/formatters.d.mts",
+        "default": "./dist/es/formatters.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/formatters.d.cts",
+        "default": "./dist/cjs/formatters.cjs"
+      }
+    },
+    "./transports": {
+      "import": {
+        "types": "./dist/es/transports.d.mts",
+        "default": "./dist/es/transports.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/transports.d.cts",
+        "default": "./dist/cjs/transports.cjs"
+      }
+    },
+    "./utils": {
+      "import": {
+        "types": "./dist/es/utils.d.mts",
+        "default": "./dist/es/utils.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/utils.d.cts",
+        "default": "./dist/cjs/utils.cjs"
+      }
+    }
+  },
+  "main": "./dist/es/index.js",
+  "module": "./dist/es/index.js",
+  "types": "./dist/es/index.d.ts",
+  "files": [
+    "dist/**",
+    "scripts/**"
+  ],
+  "scripts": {
+    "build": "bunchee",
+    "check-types": "tsc --noEmit && tsc -p tsconfig.scripts.json",
+    "check-types:scripts": "tsc -p tsconfig.scripts.json",
+    "clean": "rimraf node_modules .turbo dist coverage",
+    "dev": "bunchee --watch",
+    "format": "prettier --write \"src/**/*.{js,cjs,mjs,ts,cts,mts}\"",
+    "format:check": "prettier --check \"src/**/*.{js,cjs,mjs,ts,cts,mts}\"",
+    "lint": "eslint \"src/**/*.{js,cjs,mjs,ts,cts,mts}\"",
+    "lint:fix": "eslint --fix \"src/**/*.{js,cjs,mjs,ts,cts,mts}\"",
+    "prepublishOnly": "pnpm run build && pnpm run test:run",
+    "test": "vitest",
+    "test:build": "node scripts/test-build.ts",
+    "test:coverage": "vitest --coverage",
+    "test:coverage:ui": "vitest --coverage --ui",
+    "test:run": "vitest run",
+    "test:run:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@portfolio/config-eslint": "workspace:*",
+    "@portfolio/config-typescript": "workspace:*",
+    "@testing-library/jest-dom": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "bunchee": "catalog:",
+    "eslint": "catalog:",
+    "postcss": "catalog:",
+    "prettier": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {},
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com/"
+  }
+}
