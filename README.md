@@ -1,632 +1,203 @@
-<!-- markdownlint-disable MD024 -->
+<!-- markdownlint-disable no-emphasis-as-heading line-length -->
 
-# @portfolio/logger
+# `@portfolio/logger`
 
-A comprehensive, robust, scalable, and flexible logging system for Node.js
-and browser environments with structured logging, multiple transports,
-formatters, performance monitoring, and enterprise features.
+Shared logging toolkit for the portfolio workspace with structured logs, transport adapters, formatter pipelines, and integration helpers for Node.js and browser runtimes.
 
-## ✨ Features
+## Features
 
-### 🎯 **Comprehensive Logging**
+- 🚀 **Structured Logging Core**: Logger instance, factory API, context propagation, and child loggers
+- 🎛️ **Multi-Level Logging**: `SILENT`, `ERROR`, `WARN`, `INFO`, `HTTP`, `VERBOSE`, `DEBUG`, `SILLY`
+- 🚚 **Transport System**: Console, file, HTTP, memory, stream, null, and multi-transport orchestration
+- 🎨 **Formatter Pipeline**: JSON, console, development, production, and simple formatter support
+- 🔌 **Integration Suite**: Exported integrations for Sentry, Datadog, New Relic, LogRocket, Splunk, and cloud providers
+- 📊 **Runtime Utilities**: Metrics, timers, ID generation, rate-limiting helpers, and data sanitization utilities
+- 🔁 **Dual-Module Output**: ESM + CommonJS exports with typed subpath entrypoints
 
-- Multiple log levels (SILENT, ERROR, WARN, INFO, HTTP, VERBOSE, DEBUG, SILLY)
-- Structured logging with JSON support
-- Context and correlation ID tracking
-- Error object handling with stack traces
-- Data sanitization and security
+## Installation
 
-### 🚚 **Multiple Transports**
-
-- Console transport with colored output
-- File transport with rotation
-- HTTP transport for remote logging
-- Stream transport for custom destinations
-- Memory transport for testing
-- Multi-transport support
-
-### 🎨 **Flexible Formatters**
-
-- JSON formatter for structured data
-- Console formatter with colors and context
-- Simple text formatter
-- Development formatter with debugging info
-- Production formatter with data sanitization
-- Custom formatters support
-
-### ⚡ **Performance & Monitoring**
-
-- Built-in performance timing
-- Memory usage monitoring
-- Metrics collection (counters, gauges, histograms)
-- Rate limiting and batching
-- Async logging with queuing
-
-### 🏢 **Enterprise Features**
-
-- Plugin architecture for extensibility
-- Child loggers with inherited context
-- Error handling and recovery
-- Graceful shutdown and cleanup
-- Environment detection
-- Browser and Node.js compatibility
-
-## 📦 Installation
-
-Install the logger package using your preferred package manager:
+Install in a workspace consumer:
 
 ```bash
-# Using npm
-npm install @portfolio/logger
-
-# Using yarn
-yarn add @portfolio/logger
-
-# Using pnpm
 pnpm add @portfolio/logger
-
-# Using bun
-bun add @portfolio/logger
 ```
 
-## 🚀 Module Support
+Typical workspace dependency declaration:
 
-This package ships **dual-module builds** (ESM + CommonJS).
+```json
+{
+  "dependencies": {
+    "@portfolio/logger": "workspace:*"
+  }
+}
+```
 
-### ESM Import
+## Export Overview
+
+Primary package entrypoint:
 
 ```typescript
-import { createLogger, logger, LogLevel } from "@portfolio/logger";
+import {
+  createLogger,
+  integrations,
+  logger,
+  LogLevel,
+  logDebug,
+  logError,
+  logInfo,
+  logWarn,
+} from "@portfolio/logger";
+```
+
+Subpath entrypoints:
+
+```typescript
 import { formatters } from "@portfolio/logger/formatters";
 import { transports } from "@portfolio/logger/transports";
 import { utils } from "@portfolio/logger/utils";
 ```
 
-### CommonJS Require
+### Export Groups
 
-```javascript
-const { logger, createLogger, LogLevel } = require("@portfolio/logger");
-const { formatters } = require("@portfolio/logger/formatters");
-```
+- `Core`: `logger`, `createLogger`, `Logger`, `LogLevel`
+- `Transports`: `ConsoleTransport`, `FileTransport`, `HttpTransport`, `MemoryTransport`, `MultiTransport`, `StreamTransport`, `NullTransport`
+- `Formatters`: `JsonFormatter`, `ConsoleFormatter`, `DevFormatter`, `ProductionFormatter`, `SimpleFormatter`
+- `Integrations`: `integrations` export group (`sentry`, `datadog`, `newrelic`, `logrocket`, cloud/platform integrations)
+- `Utilities`: `utils` bundle + named runtime helpers (`sanitizeData`, `shouldLog`, `RateLimiter`, etc.)
+- `Legacy Helpers`: `log`, `logInfo`, `logWarn`, `logError`, `logDebug`, `logTrace`
 
-### Build Output Structure
+## Setup
 
-`bunchee` generates module-specific outputs:
-
-```text
-dist/
-├── es/
-│   ├── index.mjs
-│   ├── index.d.mts
-│   ├── formatters.mjs
-│   ├── transports.mjs
-│   └── utils.mjs
-└── cjs/
-    ├── index.cjs
-    ├── index.d.cts
-    ├── formatters.cjs
-    ├── transports.cjs
-    └── utils.cjs
-```
-
-### Build Configuration
-
-Module resolution is configured in `package.json` via conditional exports:
-
-```json
-{
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/es/index.d.mts",
-        "default": "./dist/es/index.mjs"
-      },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    }
-  }
-}
-```
-
-## 🚀 Quick Start
-
-### Basic Usage
+### 1. Use the Default Logger
 
 ```typescript
 import { logger } from "@portfolio/logger";
 
-// Simple logging
 logger.info("Application started");
-logger.error("Something went wrong", new Error("Details"));
-
-// With additional data
-logger.info("User logged in", { userId: 123, method: "oauth" });
-
-// With context
-logger.info(
-  "Processing request",
-  { orderId: 456 },
-  {
-    requestId: "req-789",
-    component: "order-service",
-  }
-);
+logger.error("Failed to load profile", new Error("Profile missing"));
 ```
 
-### Advanced Configuration
+### 2. Create a Configured Logger
 
 ```typescript
 import {
-  ConsoleTransport,
   createLogger,
   formatters,
-  HttpTransport,
   LogLevel,
+  transports,
 } from "@portfolio/logger";
 
 const appLogger = createLogger({
-  level: LogLevel.DEBUG,
-  environment: "production",
-  transports: [
-    new ConsoleTransport({
-      formatter: formatters.console,
-      useColors: true,
-    }),
-    new HttpTransport({
-      url: "https://logs.example.com/api/logs",
-      batchSize: 50,
-      flushInterval: 5000,
-    }),
-  ],
-  performance: {
-    enabled: true,
-    sampleRate: 0.1, // 10% sampling
-  },
-  rateLimit: {
-    max: 1000,
-    windowMs: 60000, // 1000 logs per minute
-  },
-  errorHandling: {
-    handleExceptions: true,
-    handleRejections: true,
-    exitOnError: false,
-  },
+  level: LogLevel.INFO,
+  transports: [transports.console],
+  formatter: formatters.json,
 });
 ```
 
-## 📊 Performance Monitoring
-
-### Timing Operations
+### 3. Use Child Context for Requests
 
 ```typescript
-import { logger } from "@portfolio/logger";
-
-// Measure execution time
-logger.time("database-query");
-await performDatabaseQuery();
-logger.timeEnd("database-query");
-// Logs: Timer 'database-query' completed (150.25ms, mem: +2.1MB)
-```
-
-### Metrics Collection
-
-```typescript
-// Counter - count occurrences
-logger.counter("user.login", 1, { method: "oauth", region: "us-east" });
-
-// Gauge - current value
-logger.gauge("memory.usage", 85.5, { service: "api" });
-
-// Histogram - value distribution
-logger.histogram("response.time", 150, { endpoint: "/api/users" });
-```
-
-## 🏗️ Structured Logging
-
-### Context Management
-
-```typescript
-// Set global context
-logger.setContext({
-  service: "user-api",
-  version: "1.2.3",
-  environment: "production",
-});
-
-// Create child logger with additional context
-const requestLogger = logger.child({
+const requestLogger = appLogger.child({
   requestId: "req-123",
-  userId: 456,
+  component: "api-gateway",
 });
 
-requestLogger.info("Processing user request");
-// Includes both global and request-specific context
+requestLogger.info("Request received");
 ```
 
-### Data Sanitization
+## Integration Examples
+
+### Sentry + Datadog Composition
 
 ```typescript
-// Automatically redacts sensitive data
-logger.info("User authentication", {
-  username: "john.doe",
-  password: "secret123", // → [REDACTED]
-  apiKey: "key_abc123", // → [REDACTED]
-  token: "bearer_xyz789", // → [REDACTED]
-  email: "john@example.com", // → preserved
-});
-```
+import { createLogger, integrations } from "@portfolio/logger";
 
-## 🎨 Formatters
-
-### JSON Formatter
-
-```typescript
-import { JsonFormatter } from "@portfolio/logger";
-
-const jsonFormatter = new JsonFormatter({
-  pretty: true,
-  includeStack: true,
-});
-
-// Output: Structured JSON with full context
-```
-
-### Console Formatter
-
-```typescript
-import { ConsoleFormatter } from "@portfolio/logger";
-
-const consoleFormatter = new ConsoleFormatter({
-  colors: true,
-  includeContext: true,
-  includePerformance: true,
-});
-
-// Output: [2024-01-01T00:00:00.000Z] [INFO   ] [user-service] (req-abc123)
-// User logged in {"userId":123} (15.2ms, mem: 45.2MB)
-```
-
-### Development Formatter
-
-```typescript
-import { DevFormatter } from "@portfolio/logger";
-
-const devFormatter = new DevFormatter({
-  includeSource: true,
-  includeMetadata: true,
-});
-
-// Output: Enhanced console output with source location and metadata
-```
-
-## 🚚 Transports
-
-### Console Transport
-
-```typescript
-import { ConsoleTransport } from "@portfolio/logger";
-
-const consoleTransport = new ConsoleTransport({
-  formatter: formatters.console,
-  useColors: true,
-});
-```
-
-### File Transport
-
-```typescript
-import { FileTransport } from "@portfolio/logger";
-
-const fileTransport = new FileTransport({
-  filename: "./logs/app.log",
-  maxSize: 10 * 1024 * 1024, // 10MB
-  maxFiles: 5,
-  formatter: formatters.json,
-});
-```
-
-### HTTP Transport
-
-```typescript
-import { HttpTransport } from "@portfolio/logger";
-
-const httpTransport = new HttpTransport({
-  url: "https://logs.example.com/api/logs",
-  headers: {
-    Authorization: "Bearer token123",
-    "X-API-Key": "key456",
-  },
-  batchSize: 25,
-  flushInterval: 5000,
-  formatter: formatters.json,
-});
-```
-
-### Memory Transport (Testing)
-
-```typescript
-import { MemoryTransport } from "@portfolio/logger";
-
-const memoryTransport = new MemoryTransport({
-  maxLogs: 1000,
-  formatter: formatters.simple,
-});
-
-// Access logs for testing
-const logs = memoryTransport.getLogs();
-memoryTransport.clear();
-```
-
-## 🔌 Plugin System
-
-### Creating Custom Plugins
-
-```typescript
-import type { LogEntry, LoggerPlugin } from "@portfolio/logger";
-
-class MetricsPlugin implements LoggerPlugin {
-  name = "metrics";
-
-  beforeTransport(entry: LogEntry): LogEntry | null {
-    // Collect metrics before logging
-    this.collectMetrics(entry);
-    return entry;
-  }
-
-  afterTransport(entry: LogEntry): void {
-    // Post-processing after logging
-    this.updateCounters(entry);
-  }
-
-  private collectMetrics(entry: LogEntry): void {
-    // Custom metrics collection logic
-  }
-
-  private updateCounters(entry: LogEntry): void {
-    // Update counters based on log entry
-  }
-}
-
-// Add plugin to logger
-logger.addPlugin(new MetricsPlugin());
-```
-
-## 🌍 Environment Configuration
-
-### Automatic Environment Detection
-
-```typescript
-import { detectEnvironment, LogLevel } from "@portfolio/logger";
-
-const env = detectEnvironment(); // 'development' | 'production' | 'test' | 'staging'
-
-const config = {
-  level: env === "production" ? LogLevel.INFO : LogLevel.DEBUG,
-  transports:
-    env === "production" ? [httpTransport, fileTransport] : [consoleTransport],
-  formatter: env === "production" ? formatters.production : formatters.dev,
-};
-```
-
-### Environment-Specific Formatters
-
-```typescript
-// Development: Enhanced console output with source info
-const devLogger = createLogger({
-  formatter: formatters.dev,
-  transports: [consoleTransport],
-});
-
-// Production: JSON output with sanitized data
-const prodLogger = createLogger({
-  formatter: formatters.production,
-  transports: [httpTransport, fileTransport],
-});
-```
-
-## 🔒 Security Features
-
-### Data Sanitization
-
-Automatically redacts sensitive fields:
-
-- `password`, `secret`, `token`, `auth`, `key`
-- Configurable field patterns
-- Deep object traversal
-- Circular reference handling
-
-### Rate Limiting
-
-```typescript
 const logger = createLogger({
-  rateLimit: {
-    max: 1000, // Maximum logs
-    windowMs: 60000, // Per time window (1 minute)
-  },
+  transports: [
+    integrations.sentry({ dsn: process.env.SENTRY_DSN }),
+    integrations.datadog({ apiKey: process.env.DATADOG_API_KEY }),
+  ],
 });
 ```
 
-## 📈 Browser Support
+### Provider-Specific Setup Reference
 
-### Browser-Specific Features
+Use `INTEGRATIONS.md` for full provider configuration examples and option details.
 
-```typescript
-// Automatic environment detection
-// localStorage integration (optional)
-// Performance API usage
-// Error boundary integration
+## Development
+
+Run from `packages/logger`:
+
+```bash
+pnpm build
+pnpm check-types
+pnpm check-types:scripts
+pnpm lint
+pnpm test
+pnpm test:run
+pnpm test:coverage
+pnpm test:build
+pnpm format:check
 ```
 
-### Usage in React
+## Testing
 
-```typescript
-import { logger } from '@portfolio/logger';
+This package includes Vitest suites for logger behavior and log utility contracts:
 
-function UserComponent({ userId }: { userId: number }) {
-  const componentLogger = logger.child({ component: 'UserComponent', userId });
+- `src/__tests__/logger.test.ts`
+- `src/__tests__/log.test.ts`
 
-  useEffect(() => {
-    componentLogger.info('Component mounted');
-    return () => componentLogger.info('Component unmounted');
-  }, []);
+Validation coverage includes:
 
-  const handleAction = () => {
-    componentLogger.time('user-action');
-    // Perform action
-    componentLogger.timeEnd('user-action');
-  };
+- Logger level behavior and transport routing
+- Formatter output paths and log payload shaping
+- Compatibility helper behavior (`logInfo`, `logError`, etc.)
+- Build-validation script checks via `test:build`
 
-  return <div>...</div>;
-}
+## Best Practices
+
+### 1. **Centralize Logger Construction**
+
+- Create one app-level logger instance and inject child contexts where needed.
+- Keep transport wiring at service boundaries.
+
+### 2. **Use Context-Rich Events**
+
+- Attach `requestId`, `component`, and operation metadata in child logger contexts.
+- Keep error payloads structured instead of string-concatenated.
+
+### 3. **Prefer Subpath Imports for Advanced APIs**
+
+- Import from `@portfolio/logger/formatters`, `@portfolio/logger/transports`, and `@portfolio/logger/utils` when using specialized modules.
+- Keep root imports focused on core logger usage.
+
+### 4. **Sanitize Sensitive Fields**
+
+- Use built-in sanitization helpers for logs containing auth or identity fields.
+- Avoid passing raw secrets or tokens to transport payloads.
+
+## Troubleshooting
+
+### Common Issues
+
+**Subpath import cannot be resolved**
+
+Ensure consumer tooling reads package `exports` maps and install dependencies from workspace root:
+
+```bash
+pnpm install
 ```
 
-## 🧪 Testing
+**Logs are not emitted at runtime**
 
-### Using Memory Transport
+Verify logger level, configured transport list, and environment-specific filtering.
 
-```typescript
-import { createLogger, LogLevel, MemoryTransport } from "@portfolio/logger";
+**Integration transport does not receive events**
 
-describe("Application Logic", () => {
-  let logger: Logger;
-  let memoryTransport: MemoryTransport;
+Confirm required provider keys/options are present and validate transport-specific endpoint configuration in `INTEGRATIONS.md`.
 
-  beforeEach(() => {
-    memoryTransport = new MemoryTransport();
-    logger = createLogger({
-      level: LogLevel.DEBUG,
-      transports: [memoryTransport],
-    });
-  });
+## Dependencies
 
-  it("logs user actions", () => {
-    logger.info("User action", { action: "click", element: "button" });
-
-    const logs = memoryTransport.getLogs();
-    expect(logs).toHaveLength(1);
-    expect(logs[0]).toContain("User action");
-  });
-});
-```
-
-## 💡 Best Practices
-
-### 1. Use Appropriate Log Levels
-
-```typescript
-logger.error("Critical system failure", error); // System errors
-logger.warn("Deprecated API usage"); // Warnings
-logger.info("User logged in", { userId }); // Business events
-logger.http("GET /api/users", { responseTime }); // HTTP requests
-logger.verbose("Cache hit", { key, ttl }); // Detailed info
-logger.debug("Variable state", { variables }); // Debug info
-logger.silly("Function entry", { args }); // Trace info
-
-// SILENT level (0) - disables all logging
-const silentLogger = createLogger({ level: LogLevel.SILENT });
-```
-
-### 2. Use Structured Context
-
-```typescript
-// Good: Structured context
-const userLogger = logger.child({
-  component: "user-service",
-  version: "1.0.0",
-});
-
-userLogger.info("User action", {
-  userId: 123,
-  action: "login",
-  timestamp: new Date().toISOString(),
-});
-
-// Avoid: String concatenation
-logger.info(`User 123 performed login at ${new Date()}`);
-```
-
-### 3. Performance Monitoring
-
-```typescript
-// Measure important operations
-logger.time("database-query");
-const result = await database.query("SELECT * FROM users");
-logger.timeEnd("database-query");
-
-// Track business metrics
-logger.counter("user.signup", 1, { source: "web" });
-logger.gauge("active.connections", connectionCount);
-logger.histogram("request.duration", processingTime);
-```
-
-### 4. Error Handling
-
-```typescript
-try {
-  await riskyOperation();
-} catch (error) {
-  logger.error("Operation failed", error, {
-    operation: "user-update",
-    userId: user.id,
-    metadata: { retryCount, lastAttempt },
-  });
-  throw error; // Re-throw if needed
-}
-```
-
-## 📚 API Reference
-
-### Core Classes
-
-- **`Logger`** - Main logger class
-- **`createLogger(config?, context?)`** - Factory function
-- **`logger`** - Default logger instance
-
-### Transports
-
-- **`ConsoleTransport`** - Console output
-- **`FileTransport`** - File system logging
-- **`HttpTransport`** - Remote HTTP logging
-- **`StreamTransport`** - Custom stream output
-- **`MemoryTransport`** - In-memory storage
-- **`MultiTransport`** - Multiple transport fanout
-
-### Formatters
-
-- **`JsonFormatter`** - JSON structured output
-- **`ConsoleFormatter`** - Colored console output
-- **`SimpleFormatter`** - Plain text output
-- **`DevFormatter`** - Enhanced development output
-- **`ProductionFormatter`** - Sanitized production output
-
-### Utilities
-
-- **`parseLogLevel()`** - Parse log level strings
-- **`shouldLog()`** - Check if level should log
-- **`generateId()`** - Generate unique identifiers
-- **`sanitizeData()`** - Sanitize sensitive data
-- **`detectEnvironment()`** - Auto-detect environment
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 LICENSE
-
-This project is licensed under the MIT LICENSE - see the [LICENSE](LICENSE)
-file for details.
-
-## 🔗 Links
-
-- [GitHub Repository](https://github.com/guyromellemagayano/portal)
-- [Issue Tracker](https://github.com/guyromellemagayano/portal/issues)
-- [Package Registry](https://npm.pkg.github.com/)
-- [Integrations Guide](./INTEGRATIONS.md) - Detailed integration examples
-  and configurations
+- Runtime dependencies: none
+- Dev dependencies: shared workspace tooling (`@portfolio/config-eslint`, `@portfolio/config-typescript`, `vitest`, `typescript`, `bunchee`, and related lint/test tooling)
+- Package publish target: GitHub Packages (`"publishConfig.registry": "https://npm.pkg.github.com/"`)
